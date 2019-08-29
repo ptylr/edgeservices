@@ -53,3 +53,8 @@ Whitelisting the "Authorization" header on the request, and using as a cache-key
 
 ## License
 All yours. MIT License. Do what you will, at your own risk!
+
+## Credit
+Inspired by <a href="https://gist.github.com/lmakarov/e5984ec16a76548ff2b278c06027f1a4" target="_blank">lmakarov/lambda-basic-auth.js</a> and <a href="https://github.com/webscale-oy/aws-cloudfront-basic-auth" target="_blank">webscale-oy/aws-cloudfront-basic-auth</a>.
+
+Thanks to <a href="https://github.com/richard-lund">Richard Lund</a> for the debugging & refactoring.
