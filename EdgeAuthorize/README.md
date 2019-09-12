@@ -1,4 +1,4 @@
-# EdgeAuthorize
+# EdgeAuthorize - A Lambda@Edge Function for Basic (HTTP 401) Authentication
 A Lambda, executed upon CloudFront's "Origin Request" behaviour, to check for the presence of a password configuration
 file within the root of the S3 origin, providing Basic Authentication as instructed.
 
