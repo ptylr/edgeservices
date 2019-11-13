@@ -1,0 +1,23 @@
+{
+  "name": "edgeservices-originresponse",
+  "version": "1.0.0",
+  "description": "EdgeServices - A Pair of Lambda@Edge Functions for Executing Common Operations on Request",
+  "main": "handler.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/ptylr/Lambda-at-Edge/tree/master/EdgeServices"
+  },
+  "keywords": [
+    "Edge",
+    "Services",
+    "Lambda"
+  ],
+  "author": "Richard Lund and Paul Taylor",
+  "license": "MIT",
+  "dependencies": {
+    "lru-cache": "^5.1.1"
+  }
+}
