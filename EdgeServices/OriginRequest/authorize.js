@@ -14,9 +14,9 @@ const applyRules = function (event, authorizeRules) {
     }
 
     // No rules means this request can be anonymous
-    if (!authorizeRules) return;
+    if (!authorizeRules) return event;
     const keys = Object.keys(authorizeRules);
-    if (!keys || !keys.length === 0) return;
+    if (!keys || !keys.length === 0) return event;
 
     if (authorizeRules.paths && !authorizeRules.paths.some((e) => new RegExp(e).test(request.uri))) {
         console.log(`AUTHORIZE: Path [${request.uri}] does not require auth.`);

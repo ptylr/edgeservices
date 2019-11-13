@@ -3,9 +3,9 @@
 const applyRules = function (event, pathRules) {
 
     // No rules means this request is allowed
-    if (!pathRules) return;
+    if (!pathRules) return event;
     const keys = Object.keys(pathRules);
-    if (!keys || !keys.length === 0) return;
+    if (!keys || !keys.length === 0) return event;
 
     const request = event.Records[0].cf.request;
     console.log(`RESTRICTED PATHS: Request for [${request.uri}]`);
