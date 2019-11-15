@@ -158,7 +158,9 @@ Resources:
               - 's3:GetBucketLocation'
             Resource: '*'
           - Effect: Allow
-            Action: 's3:GetObject'
+            Action:
+              - 's3:GetObject'
+              - 's3:ListBucket'
             Resource:
               - !Join [ "", [ "arn:aws:s3:::", !Ref S3Bucket ] ]
               - !Join [ "", [ "arn:aws:s3:::", !Ref S3Bucket, "/*" ] ]
