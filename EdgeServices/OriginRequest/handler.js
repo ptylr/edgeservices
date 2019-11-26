@@ -17,12 +17,13 @@ let LRU = require("lru-cache")
   , configCache = new LRU(options)
   , rulesCache = new LRU(options);
 
-module.exports.handler = (event, _context, callback) => {
+module.exports.handler = (event, context, callback) => {
 
     console.log("Event: " + JSON.stringify(event));
+    console.log("Context: " + JSON.stringify(context));
     const request = event.Records[0].cf.request;
     const clearCache = (request.querystring || "").indexOf("clearConfigCache") >= 0;
-    getConfig(request.headers.host[0].value, clearCache)
+    getConfig(request.headers.host[0].value, context.functionName, clearCache)
     .then(config => {
 
         let result = defaultDocument.applyRules(event, config.defaultDocument);
@@ -51,7 +52,7 @@ module.exports.handler = (event, _context, callback) => {
             rulesCache.set(host, redirectRules);
         }
         
-        rewrites.applyRules(result, redirectRules).then((r) => {
+        rewrites.applyRules(result, redirectRules, context.functionName, config.defaultDocument).then((r) => {
             return callback(null, r.res);
         });
     })
@@ -64,13 +65,13 @@ module.exports.handler = (event, _context, callback) => {
 
 };
 
-async function getConfig(host, clearCache) {
+async function getConfig(host, fn, clearCache) {
     let cfg = configCache.get(host);
     if (cfg && !clearCache) {
         console.log(`Cache hit for config for ${host}`);
     } else {
         console.log(`Cache miss for config for ${host}`);
-        cfg = await config.load(host);
+        cfg = await config.load(host, fn);
         if (cfg) {
             configCache.set(host, cfg);
         }

@@ -14,20 +14,20 @@ let LRU = require("lru-cache")
               , maxAge: 1000 * 60 * 5 }
   , configCache = new LRU(options);
 
-module.exports.handler = (event, _context, callback) => {
+module.exports.handler = (event, context, callback) => {
 
     const request = event.Records[0].cf.request;
     const clearCache = (request.querystring || "").indexOf("clearConfigCache") >= 0;
-    getConfig(request.headers.host[0].value, clearCache)
+    getConfig(request.headers.host[0].value, context.functionName, clearCache)
     .then(config => {
-        errors.applyRules(event, config.errors).then(res => {
+        errors.applyRules(event, context.functionName, config.errors).then(res => {
             event = res;
             event = headers.applyRules(event, config.headers);
             return callback(null, event.Records[0].cf.response);
         })
     })
-    .catch(_error => {
-        console.error(_error);
+    .catch(error => {
+        console.error(error);
         // No config file, so everything is fine
         console.log("No config file was found.");
         return callback(null, event.Records[0].cf.response);
@@ -35,13 +35,13 @@ module.exports.handler = (event, _context, callback) => {
 
 };
 
-async function getConfig(host, clearCache) {
+async function getConfig(host, fn, clearCache) {
     let cfg = configCache.get(host);
     if (cfg && !clearCache) {
         console.log(`Cache hit for config for ${host}`);
     } else {
         console.log(`Cache miss for config for ${host}`);
-        cfg = await config.load(host);
+        cfg = await config.load(host, fn);
         if (cfg) {
             configCache.set(host, cfg);
         }

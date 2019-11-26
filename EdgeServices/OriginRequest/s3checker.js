@@ -2,6 +2,8 @@
 
 const AWS = require('aws-sdk');
 const s3 = new AWS.S3();
+const http = require('./http');
+const useS3api = false;
 
 let LRU = require("lru-cache")
   , options = { max: 1000
@@ -10,7 +12,7 @@ let LRU = require("lru-cache")
               , maxAge: 1000 * 60 * 5 }
   , uriCache = new LRU(options);
 
-const exists = (host, path) => new Promise((resolve, reject) => {
+const exists = (host, path, fn, defaultDocument) => new Promise((resolve, reject) => {
 
     const cacheKey = host + path;
     let result = uriCache.get(cacheKey);
@@ -36,44 +38,64 @@ const exists = (host, path) => new Promise((resolve, reject) => {
     //return;
 
     if (path.charAt(0) === '/') path = path.substr(1);
-    var params = {
-        Bucket: host.replace(".s3.amazonaws.com", ""),
-        Key: path
-    };
-    s3.headObject(params, (err, _data) => {
-        if (err) {
-            if (err.code === "NotFound") {
+    if (defaultDocument && path.charAt(path.length - 1) === '/') path += defaultDocument;
+    if (useS3api) {
+        var params = {
+            Bucket: host.replace(".s3.amazonaws.com", ""),
+            Key: path
+        };
+        // s3.listObjectsV2({Bucket: params.Bucket}, (err, data) => {
+        //     console.warn(`DEBUG: ${path}, ${err}, ${JSON.stringify(data)}`);
+        // });
+        s3.headObject(params, (err, _data) => {
+            if (err) {
+                if (err.code === "NotFound") {
+                    console.log(`S3CHECKER: [/${path}] exists = false`);
+                    uriCache.set(cacheKey, false);
+                    resolve(false);
+                }
+                else {
+                    console.error(err, err.stack)
+                    reject(err);
+                }
+            }
+            else {
+                console.log(`S3CHECKER: [/${path}] exists = true`);
+                uriCache.set(cacheKey, true);
+                resolve(true);
+            }
+        });
+    } else {
+        if (path.charAt(path.length - 1) === "/") path += defaultDocument;
+        console.log(`Requesting ${host}/${path}`);
+        http.check(host, path, fn)
+            .then(_data => {
+                console.log(`S3CHECKER: [${path}] exists = true`);
+                uriCache.set(cacheKey, true);
+                resolve(true);
+            })
+            .catch(_error => {
                 console.log(`S3CHECKER: [${path}] exists = false`);
                 uriCache.set(cacheKey, false);
                 resolve(false);
-            }
-            else {
-                console.error(err, err.stack)
-                reject(err);
-            }
-        }
-        else {
-            console.log(`S3CHECKER: [${path}] exists = true`);
-            uriCache.set(cacheKey, true);
-            resolve(true);
-        }
-    });
+            });
+    }
 });
 
-const isDirectory = async (host, path) => {
+const isDirectory = async (host, path, fn, defaultDocument) => {
     if (path.charAt(path.length - 1) !== "/") {
         console.log(`S3CHECKER: [${path}] is not a directory`);
         return false;
     }
-    return await exists(host, path);
+    return await exists(host, path, fn, defaultDocument);
 };
 
-const isFile = async (host, path) => {
+const isFile = async (host, path, fn, defaultDocument) => {
     if (path.charAt(path.length - 1) === "/") {
         console.log(`S3CHECKER: [${path}] is not a file`);
         return false;
     }
-    return await exists(host, path);
+    return await exists(host, path, fn, defaultDocument);
 };
 
 //module.exports.exists = exists;

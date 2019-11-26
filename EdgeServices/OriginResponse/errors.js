@@ -3,8 +3,9 @@
 const http = require("./http");
 const AWS = require('aws-sdk');
 const s3 = new AWS.S3();
+const useS3api = false;
 
-const applyRules = (event, errorRules) => new Promise((resolve, reject) => {
+const applyRules = (event, fn, errorRules) => new Promise((resolve, reject) => {
 
     if (!errorRules) return resolve(event);
     if (!event || !event.Records || event.Records.length < 1 || !event.Records[0].cf || !event.Records[0].cf.request || !event.Records[0].cf.response) return resolve(event);
@@ -61,21 +62,38 @@ const applyRules = (event, errorRules) => new Promise((resolve, reject) => {
     } else {
         // Use S3 to get the url
         if (errorUrl.charAt(0) === '/') errorUrl = errorUrl.substr(1);
-        var params = {
-            Bucket: request.headers.host[0].value.replace(".s3.amazonaws.com", ""),
-            Key: errorUrl
-        };
-        s3.getObject(params, (err, data) => {
-            if (err) {
-                console.warn(`ERRORS: Error loading error page [${errorUrl}], ${err}`);
-                return resolve(event);
-            }
-            else {
-                console.log(`ERRORS: Got error page [${errorUrl}], status [${response.status}]`);
-                response.body = data.Body.toString("utf-8");
-                return resolve(event);
-            }
-        });
+        if (useS3api) {
+            var params = {
+                Bucket: request.headers.host[0].value.replace(".s3.amazonaws.com", ""),
+                Key: errorUrl
+            };
+            s3.getObject(params, (err, data) => {
+                if (err) {
+                    console.warn(`ERRORS: Error loading error page [${errorUrl}], ${err}`);
+                    return resolve(event);
+                }
+                else {
+                    console.log(`ERRORS: Got error page [${errorUrl}], status [${response.status}]`);
+                    response.body = data.Body.toString("utf-8");
+                    return resolve(event);
+                }
+            });
+        } else {
+            const host = request.headers.host[0].value;
+            if (errorUrl.charAt(errorUrl.length - 1) === "/") errorUrl += defaultDocument;
+            console.log(`Requesting ${host}/${errorUrl}`);
+            http.get(host, errorUrl, fn)
+                .then(data => {
+                    console.log(`ERRORS: Got error page [${errorUrl}], status [${response.status}]`);
+                    response.body = data;
+                    return resolve(event);
+                })
+                .catch(err => {
+                    console.warn(`ERRORS: Error loading error page [${errorUrl}], ${err}`);
+                    return resolve(event);
+                });
+    
+        }
     }
 });
 module.exports.applyRules = applyRules;
