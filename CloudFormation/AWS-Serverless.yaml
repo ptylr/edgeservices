@@ -23,7 +23,7 @@ Resources:
             QueryString: true
             Headers:
               - Authorization
-          TargetOriginId: !Join [ "", [ !Ref S3Bucket, ".s3.amazonaws.com" ] ]
+          TargetOriginId: !Sub '${S3Bucket}.s3.amazonaws.com'
           ViewerProtocolPolicy: redirect-to-https
           MinTTL: 0
           AllowedMethods:
@@ -40,13 +40,12 @@ Resources:
         Enabled: true
         HttpVersion: http2
         Origins:
-          - DomainName:
-              !Join [ "", [ !Ref S3Bucket, ".s3.amazonaws.com" ] ]
-            Id: !Join [ "", [ !Ref S3Bucket, ".s3.amazonaws.com" ] ]
+          - DomainName: !Sub '${S3Bucket}.s3.amazonaws.com'
+            Id: !Sub '${S3Bucket}.s3.amazonaws.com'
             S3OriginConfig:
               OriginAccessIdentity:
-                !Join [ "", [ "origin-access-identity/cloudfront/", !Ref CloudFrontOriginAccessIdentity ] ]
-        PriceClass: PriceClass_100
+                !Sub 'origin-access-identity/cloudfront/${CloudFrontOriginAccessIdentity}'
+        PriceClass: PriceClass_All
         ViewerCertificate:
           AcmCertificateArn: !Ref AcmCertificateArn
           MinimumProtocolVersion: TLSv1.1_2016
@@ -79,11 +78,21 @@ Resources:
           - Action:
               - 's3:GetObject'
             Effect: Allow
-            Resource: !Join [ "", [ "arn:aws:s3:::", !Ref S3Bucket, "/*" ] ]
+            Resource: !Sub 'arn:aws:s3:::${S3Bucket}/*'
             Principal:
               CanonicalUser: !GetAtt
                 - CloudFrontOriginAccessIdentity
                 - S3CanonicalUserId
+          - Action:
+              - 's3:GetObject'
+            Effect: Allow
+            Resource: !Sub 'arn:aws:s3:::${S3Bucket}/*'
+            Principal: '*'
+            Condition:
+              StringLike:
+                'aws:Referer':
+                  - !Sub '${AWS::Region}.${OriginRequestLambdaFunction}'
+                  - !Sub '${AWS::Region}.${OriginResponseLambdaFunction}'
   OriginRequestLambdaFunction:
     Type: 'AWS::Lambda::Function'
     Properties:
@@ -156,7 +165,7 @@ Resources:
               - 's3:GetObject'
               - 's3:ListBucket'
             Resource:
-              - !Join [ "", [ "arn:aws:s3:::", !Ref S3Bucket ] ]
-              - !Join [ "", [ "arn:aws:s3:::", !Ref S3Bucket, "/*" ] ]
+              - !Sub 'arn:aws:s3:::${S3Bucket}'
+              - !Sub 'arn:aws:s3:::${S3Bucket}/*'
       Roles:
         - !Ref LambdaFunctionExecutionRole
