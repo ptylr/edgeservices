@@ -13,7 +13,10 @@ let req = {};
 let host = "";
 const s3checker = require("./s3checker");
 
-const applyRules = async function(event, rewriteRules) {
+const applyRules = async function(event, rewriteRules, fn, defaultDocument) {
+
+    defaultDocument = defaultDocument || "index.html";
+
     req = event.Records[0].cf.request;
     host = req.headers.host[0].value;
     let uri = req.uri;
@@ -29,7 +32,7 @@ const applyRules = async function(event, rewriteRules) {
             continue;
         }
 
-        if (rule.conditions && rule.conditions.length && !await reducer(rule, acc)) {
+        if (rule.conditions && rule.conditions.length && !await reducer(rule, acc, fn, defaultDocument)) {
             continue;
         }
 
@@ -196,7 +199,7 @@ function tidyConditionPart(part) {
     return part;
 }
 
-const evaluateCondition = async (condition, acc) => {
+const evaluateCondition = async (condition, acc, fn, defaultDocument) => {
     condition.test = expandMacros(condition.test || "", acc);
     console.log(`REWRITE: Evaluating ${JSON.stringify(condition)}`);
     if (!condition.test) return false;
@@ -208,12 +211,12 @@ const evaluateCondition = async (condition, acc) => {
         return match;
     } else if (condition.isFile) {
         //console.log(`REWRITE: Testing if [${condition.test}] is ${condition.inverted ? "NOT " : ""}a file`);
-        var result = await s3checker.isFile(host, condition.test);
+        var result = await s3checker.isFile(host, condition.test, fn, defaultDocument);
         if (condition.inverted) result = !result;
         return result;
     } else if (condition.isDirectory) {
         //console.log(`REWRITE: Testing if [${condition.test}] is ${condition.inverted ? "NOT " : ""}a directory`);
-        var result = await s3checker.isDirectory(host, condition.test);
+        var result = await s3checker.isDirectory(host, condition.test, fn, defaultDocument);
         if (condition.inverted) result = !result;
         return result;
     } else {
@@ -229,10 +232,10 @@ function expandMacros(value, acc) {
     ;
 }
 
-async function reducer(rule, acc) {
+async function reducer(rule, acc, fn, defaultDocument) {
     for (let i = 0, len = rule.conditions.length; i < len; i++) {
         let condition = Object.assign({},rule.conditions[i]);
-        const result = await evaluateCondition(condition, acc);
+        const result = await evaluateCondition(condition, acc, fn, defaultDocument);
         console.log(`REWRITE: Evaluated  ${JSON.stringify(condition)} - result = ${result}`);
         if (!result) {
             return false;
