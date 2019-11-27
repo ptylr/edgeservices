@@ -23,7 +23,8 @@ module.exports.handler = (event, context, callback) => {
     console.log("Context: " + JSON.stringify(context));
     const request = event.Records[0].cf.request;
     const clearCache = (request.querystring || "").indexOf("clearConfigCache") >= 0;
-    getConfig(request.headers.host[0].value, context.functionName, clearCache)
+    const fn = context.invokedFunctionArn.split(':')[6];
+    getConfig(request.headers.host[0].value, fn, clearCache)
     .then(config => {
 
         let result = defaultDocument.applyRules(event, config.defaultDocument);
@@ -52,7 +53,7 @@ module.exports.handler = (event, context, callback) => {
             rulesCache.set(host, redirectRules);
         }
         
-        rewrites.applyRules(result, redirectRules, context.functionName, config.defaultDocument).then((r) => {
+        rewrites.applyRules(result, redirectRules, fn, config.defaultDocument).then((r) => {
             return callback(null, r.res);
         });
     })
