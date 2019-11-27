@@ -100,7 +100,8 @@ Resources:
         EdgeServices - A Pair of Lambda@Edge Functions for Executing Common Operations on Request (see https://github.com/ptylr/Lambda-at-Edge/tree/master/EdgeServices)
       Code:
         S3Bucket: lambda-ptylr-com
-        S3Key: EdgeServices-OriginRequest.zip
+        S3Key: EdgeServices_OriginRequest.zip
+        S3ObjectVersion: WUceMAAQDakBdZl5rhHY82MaozSA2pld
       Handler: handler.handler
       MemorySize: 128
       Role: !Sub '${LambdaFunctionExecutionRole.Arn}'
@@ -120,7 +121,8 @@ Resources:
         EdgeServices - A Pair of Lambda@Edge Functions for Executing Common Operations on Request (see https://github.com/ptylr/Lambda-at-Edge/tree/master/EdgeServices)
       Code:
         S3Bucket: lambda-ptylr-com
-        S3Key: EdgeServices-OriginResponse.zip
+        S3Key: EdgeServices_OriginResponse.zip
+        S3ObjectVersion: fmArTnlFsUZyZYhZl6Sok4H7JK6aw42h
       Handler: handler.handler
       MemorySize: 128
       Role: !Sub '${LambdaFunctionExecutionRole.Arn}'
