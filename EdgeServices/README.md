@@ -38,7 +38,39 @@ function, to meet those requirements, where the origin is an Amazon S3 Bucket.
 3) Deploy new versions to Lambda@Edge;
 4) Configure "Origin Request" and "Origin Response" Behaviours to call the ARN of Lambda Functions, with the current version;
 5) Add a `/config.json` file on your S3 origin;
-6) Browse to your resource(s).
+6) Set Bucket Policy to allow access to your bucket and also to allow the HTTP Referer header with the name and Region of your
+Lambda Functions (below is an example):
+    ```
+    {
+        "Version": "2008-10-17",
+        "Statement": [
+            {
+                "Effect": "Allow",
+                "Principal": {
+                    "AWS": "arn:aws:iam::cloudfront:user/CloudFront Origin Access Identity EVKCL8WKOLIUT"
+                },
+                "Action": "s3:GetObject",
+                "Resource": "arn:aws:s3:::ptylr-com-s3bucket-16w98h5h9thdp/*"
+            },
+            {
+                "Effect": "Allow",
+                "Principal": "*",
+                "Action": "s3:GetObject",
+                "Resource": "arn:aws:s3:::ptylr-com-s3bucket-16w98h5h9thdp/*",
+                "Condition": {
+                    "StringLike": {
+                        "aws:Referer": [
+                            "us-east-1.ptylr-com-OriginRequestLambdaFunction-AD7023KLJFUT",
+                            "us-east-1.ptylr-com-OriginResponseLambdaFunction-133YYDV9TFHG"
+                        ]
+                    }
+                }
+            }
+        ]
+    }
+    ```
+
+7) Browse to your resource(s).
 
 ## Configuration
 There are a number of options available for the `config.json` file:
