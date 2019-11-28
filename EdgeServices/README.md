@@ -6,6 +6,8 @@ A pair of Lambda Functions:
  * OriginResponse - Executed upon CloudFront's "Origin Response" behaviour, to modify responses for certain conditions,
  such as mapping errors to new content and/or adding headers.
  
+![EdgeServices Sequence Diagram](https://ptylr.com/img/repos/edgeservices-sequence-diagram.png "EdgeServices Sequence Diagram")
+
 ## Why?
 Moving a complex server-side application into the cloud requires new solutions to things that were previously solved
 via web.config, web.xml or .htaccess. This suite of Lambda@Edge functionality is intended, in conjunction with the OriginResponse
