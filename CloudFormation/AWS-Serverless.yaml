@@ -10,6 +10,10 @@ Parameters:
   AcmCertificateArn:
     Type: String
     Description: ARN of the certificate to use for the CloudFront distribution.
+  RolePermissionBoundaryArn:
+    Type: String
+    Description: ARN of the permission boundary for IAM Role creation.
+    Default: ''
 Resources:
   CloudFrontDistribution:
     Type: 'AWS::CloudFront::Distribution'
@@ -138,6 +142,7 @@ Resources:
   LambdaFunctionExecutionRole:
     Type: 'AWS::IAM::Role'
     Properties:
+      PermissionsBoundary: !Ref RolePermissionBoundaryArn
       AssumeRolePolicyDocument:
         Version: 2012-10-17
         Statement:
