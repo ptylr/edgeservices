@@ -14,6 +14,9 @@ Parameters:
     Type: String
     Description: ARN of the permission boundary for IAM Role creation.
     Default: ''
+Conditions:
+  HasRolePermissionBoundaryArn:
+    !Not [ !Equals [!Ref RolePermissionBoundaryArn, ''] ]
 Resources:
   CloudFrontDistribution:
     Type: 'AWS::CloudFront::Distribution'
@@ -142,7 +145,11 @@ Resources:
   LambdaFunctionExecutionRole:
     Type: 'AWS::IAM::Role'
     Properties:
-      PermissionsBoundary: !Ref RolePermissionBoundaryArn
+      PermissionsBoundary:
+        Fn::If:
+          - HasRolePermissionBoundaryArn
+          - Ref: RolePermissionBoundaryArn
+          - Ref: AWS::NoValue
       AssumeRolePolicyDocument:
         Version: 2012-10-17
         Statement:
